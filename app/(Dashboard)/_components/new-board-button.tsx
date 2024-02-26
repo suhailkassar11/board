@@ -5,10 +5,12 @@ import { cn } from "@/lib/utils";
 import { useOrganization } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {toast} from "sonner";
 
 const NewBoardButton = () => {
     const {organization}= useOrganization()
+    const router=useRouter()
     const create = useMutation(api.board.create)
 
     const onClick=()=>{
@@ -18,6 +20,7 @@ const NewBoardButton = () => {
             title:"untitled"
         }).then((id)=>{
           toast.success("Board created")
+          router.push(`board/${id}`)
         }).catch(()=>toast.error("Failed to create board"))
     }
   return (

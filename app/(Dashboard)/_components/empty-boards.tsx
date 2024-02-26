@@ -5,10 +5,13 @@ import Image from "next/image";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 
 const EmptyBoards = () => {
     const {organization}= useOrganization()
+    const router=useRouter()
     const create = useMutation(api.board.create)
 
     const onClick=()=>{
@@ -16,6 +19,9 @@ const EmptyBoards = () => {
         create({
             orgId:organization.id,
             title:"untitled"
+        }).then((id)=>{
+            toast.success("Board created");
+            router.push(`board/${id}`)
         })
     }
 
