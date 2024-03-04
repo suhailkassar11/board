@@ -3,7 +3,7 @@ interface HintProps{
     label:string;
     side:"left" | "top" | "bottom" | "right"
     children:React.ReactNode
-    align:"center" | "start" | "end"
+    align?:"center" | "start" | "end"
     sideOffset?:number
     alignOffset?:number
 }
