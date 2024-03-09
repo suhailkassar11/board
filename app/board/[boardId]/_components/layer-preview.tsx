@@ -18,7 +18,7 @@ export const LayerPreview = memo(({id,onLayerPointerDown,selectionColor}:LayerPr
     switch(layer.type){
         case LayerType.Rectangle:
             return(
-                <Rectangle id={id} layer={layer} onPointerDown={onLayerPointerDown} selectionColor=""/>
+                <Rectangle id={id} layer={layer} onPointerDown={onLayerPointerDown} selectionColor={selectionColor!}/>
             );
         default:
             console.log("Unknown layer type");
