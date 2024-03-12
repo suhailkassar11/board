@@ -21,7 +21,6 @@ export const LayerPreview = memo(({id,onLayerPointerDown,selectionColor}:LayerPr
                 <Rectangle id={id} layer={layer} onPointerDown={onLayerPointerDown} selectionColor={selectionColor!}/>
             );
         default:
-            console.log("Unknown layer type");
             return null
             
     }

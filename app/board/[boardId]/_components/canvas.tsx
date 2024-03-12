@@ -8,6 +8,8 @@ import {
   LayerType,
   Layer,
   Point,
+  Side,
+  XYWH,
 } from "@/types/canvas";
 import {
   useCanRedo,
@@ -83,6 +85,16 @@ const Canvas = ({ boardId }: canvasProps) => {
     [lastUsedColor]
   );
 
+  const onResizeHandlePointerDown=useCallback((corner:Side,initialBounds:XYWH)=>{
+    console.log(`corner=${corner}, bounds=${initialBounds}`);
+    
+    history.pause()
+    setCanvasState({
+      mode:CanvasMode.Resizing,
+      initialBounds,
+      corner,
+    })
+  },[history])
   const onWheel = useCallback((e: React.WheelEvent) => {
     setCamera((camera) => ({
       x: camera.x - e.deltaX,
@@ -169,7 +181,7 @@ const Canvas = ({ boardId }: canvasProps) => {
             />
           ))}
           <SelectionBox
-            onResizeHandlePointerDown={()=>{}}
+            onResizeHandlePointerDown={onResizeHandlePointerDown}
           />
           <CursorPresence />
         </g>
