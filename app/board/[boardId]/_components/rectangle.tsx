@@ -5,7 +5,7 @@ interface RectangleProps {
   id: string;
   layer: RectangleLayer;
   onPointerDown: (e: React.PointerEvent, id: string) => void;
-  selectionColor: string;
+  selectionColor?: string;
 }
 export const Rectangle = ({
   id,
@@ -24,7 +24,7 @@ export const Rectangle = ({
       width={width}
       height={height}
       strokeWidth={1}
-      fill={fill ? colorToCss : "#000"}
+      fill={fill ? colorToCss(fill) : "#000"}
       stroke={selectionColor || "transparent"}
     />
   );

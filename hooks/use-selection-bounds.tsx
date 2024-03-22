@@ -22,7 +22,7 @@ const boundingBox=(layers:Layer[]): XYWH | null=>{
             right=x+width;
         }
         if(top > y){
-            top=x;
+            top=y;
         }
         if(bottom < y+ height) {
             bottom=y+height;

@@ -139,7 +139,6 @@ const Canvas = ({ boardId }: canvasProps) => {
 
   const onResizeHandlePointerDown = useCallback(
     (corner: Side, initialBounds: XYWH) => {
-      console.log(corner, initialBounds);
       history.pause();
       setCanvasState({
         mode: CanvasMode.Resizing,
@@ -250,10 +249,7 @@ const Canvas = ({ boardId }: canvasProps) => {
         undo={history.undo}
         Redo={history.redo}
       />
-      <SelectionTools
-      camera={camera}
-      setLastUsedColor={setLastUsedColor}
-      />                                            
+      <SelectionTools camera={camera} setLastUsedColor={setLastUsedColor} />
       <svg
         onWheel={onWheel}
         onPointerMove={onPointerMove}
@@ -270,7 +266,7 @@ const Canvas = ({ boardId }: canvasProps) => {
               onLayerPointerDown={onLayerPointerDown}
               selectionColor={layerIdsToColorSelection[layerId]}
             />
-          ))}
+            ))}
           <SelectionBox onResizeHandlePointerDown={onResizeHandlePointerDown} />
           <CursorPresence />
         </g>
