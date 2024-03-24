@@ -27,6 +27,7 @@ import { useSelf, useStorage } from "@/liveblocks.config";
 import { CursorPresence } from "./cursor_presence";
 import {
   connectionIdToColor,
+  penPointsToPathLayer,
   pointerEventToCanvasPoint,
   resizeBounds,
 } from "@/lib/utils";
@@ -118,6 +119,56 @@ const Canvas = ({ boardId }: canvasProps) => {
       setMyPresence({ selection: [] }, { addToHistory: true });
     }
   }, []);
+
+  const startDrawing = useMutation(
+    ({ setMyPresence }, point: Point, pressure: number) => {
+      setMyPresence({
+        pencilDraft: [[point.x, point.y, pressure]],
+        penColor: lastUsedColor,
+      });
+    },
+    [lastUsedColor]
+  );
+
+  const insertPath=useMutation(({storage,self,setMyPresence})=>{
+    const liveLayers=storage.get("layers")
+    const {pencilDraft} =self.presence;
+
+    if(pencilDraft==null || pencilDraft.length<2 || liveLayers.size>=MAX_LAYERS){
+      setMyPresence({pencilDraft:null})
+      return;
+    }
+    const id=nanoid();
+    liveLayers.set(id,new LiveObject(penPointsToPathLayer(pencilDraft,lastUsedColor)))
+    const liveLayerIds=storage.get("layerIds")
+    liveLayerIds.push(id)
+    setMyPresence({pencilDraft:null});
+    setCanvasState({mode:CanvasMode.Pencil})
+  },[lastUsedColor])
+
+  const continueDrawing = useMutation(
+    ({ self, setMyPresence }, point: Point, e: React.PointerEvent) => {
+      const { pencilDraft } = self.presence;
+      if (
+        canvasState.mode !== CanvasMode.Pencil ||
+        e.buttons !== 1 ||
+        pencilDraft == null
+      ) {
+        return;
+      }
+      setMyPresence({
+        cursor: point,
+        pencilDraft:
+          pencilDraft.length === 1 &&
+          pencilDraft[0][0] === point.x &&
+          pencilDraft[0][1] === point.y
+            ? pencilDraft
+            : [...pencilDraft, [point.x, point.y, e.pressure]],
+      });
+    },
+    [canvasState.mode]
+  );
+
   const resizeSelectedLayer = useMutation(
     ({ storage, self }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Resizing) {
@@ -161,14 +212,21 @@ const Canvas = ({ boardId }: canvasProps) => {
       const current = pointerEventToCanvasPoint(e, camera);
       if (canvasState.mode === CanvasMode.Translating) {
         translateSelectedLayer(current);
-      }
-      if (canvasState.mode === CanvasMode.Resizing) {
+      } else if (canvasState.mode === CanvasMode.Resizing) {
         resizeSelectedLayer(current);
+      } else if (canvasState.mode === CanvasMode.Pencil) {
+        continueDrawing(current, e);
       }
 
       setMyPresence({ cursor: current });
     },
-    [camera, canvasState, resizeSelectedLayer, translateSelectedLayer]
+    [
+      continueDrawing,
+      camera,
+      canvasState,
+      resizeSelectedLayer,
+      translateSelectedLayer,
+    ]
   );
 
   const onPointerLeave = useMutation(({ setMyPresence }) => {
@@ -181,9 +239,15 @@ const Canvas = ({ boardId }: canvasProps) => {
       if (canvasState.mode === CanvasMode.Inserting) {
         return;
       }
+
+      if (canvasState.mode === CanvasMode.Pencil) {
+        startDrawing(point, e.pressure);
+
+        return;
+      }
       setCanvasState({ origin: point, mode: CanvasMode.Pressing });
     },
-    [canvasState.mode, camera, setCanvasState]
+    [canvasState.mode, camera, setCanvasState, startDrawing]
   );
   const onPointerUp = useMutation(
     ({}, e) => {
@@ -194,6 +258,8 @@ const Canvas = ({ boardId }: canvasProps) => {
       ) {
         unSelectedLayers();
         setCanvasState({ mode: CanvasMode.None });
+      } else if (canvasState.mode === CanvasMode.Pencil) {
+        insertPath();
       } else if (canvasState.mode === CanvasMode.Inserting) {
         insertLayer(canvasState.layerType, point);
       } else {
@@ -203,7 +269,7 @@ const Canvas = ({ boardId }: canvasProps) => {
       }
       history.resume();
     },
-    [camera, canvasState, history, insertLayer, unSelectedLayers]
+    [setCanvasState,camera, canvasState, history, insertLayer, unSelectedLayers, insertPath]
   );
 
   const selections = useOthersMapped((other) => other.presence.selection);
@@ -266,7 +332,7 @@ const Canvas = ({ boardId }: canvasProps) => {
               onLayerPointerDown={onLayerPointerDown}
               selectionColor={layerIdsToColorSelection[layerId]}
             />
-            ))}
+          ))}
           <SelectionBox onResizeHandlePointerDown={onResizeHandlePointerDown} />
           <CursorPresence />
         </g>
